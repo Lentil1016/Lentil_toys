@@ -75,7 +75,7 @@ void* sub_receiver(void* a)
 	while(1)
 	{
 		//recv from client
-		if((strcmp(buffer,"exit")==0)||(recv(asyner->conn, buffer, buffer_size,0) <= 0))
+		if((recv(asyner->conn, buffer, buffer_size,0) <= 0)||(strcmp(buffer,"exit")==0))
 		{
 			//on condition of other side quite or receive failed
 			std::cout<<"[The connection of socket "<< asyner->conn <<" has down]"<<std::endl;

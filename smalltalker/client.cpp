@@ -1,4 +1,4 @@
-#include "thread.h"
+#include "subthread_c.h"
 
 const int myport		=11010;
 const int queue_size	=20;
