@@ -17,14 +17,14 @@ struct thread_struct
 	int flag;
 };
 
-void* sub_client(void* a)
+void* sub_sender(void* a)
 {
 	//get init data
 	thread_struct* asyner = (thread_struct*)a;
 
 	//get sem
 	sem_wait(&(asyner->sem));
-	std::cout<< "client get sem"<<std::endl;
+	std::cout<< "sender get sem"<<std::endl;
 
 	//init buffer
 	char buffer[buffer_size];
@@ -33,28 +33,24 @@ void* sub_client(void* a)
 	{
 		//read buffer from stdin
 		std::cin>>buffer;
-
-		if (strcmp(buffer,"x")==0){
-
-			//on condition of kill client
-			if(asyner->flag==0)
-				std::cout<<"[Deny to quit, this is the original server]"<<std::endl;
-			else{
-				send(asyner->conn, buffer, strlen(buffer), 0);
-				std::cout<<"[client post the sem, quitting from this side]"<<std::endl;
-				sem_post(&asyner->sem);
-			}
-
-		}else if (strcmp(buffer,"exit")==0){
-
-			//on condition of exit from both side
-			send(asyner->conn, buffer, strlen(buffer), 0);
-			std::cout<<"[client post the sem, quitting from both side]"<<std::endl;
+		if(send(asyner->conn, buffer, strlen(buffer), 0) <= 0)
+		{
+			std::cout<<"[sending failed]"<<std::endl;
+			//set reconnecting flag
+			asyner->flag=-1;
+			//release sem
 			sem_post(&asyner->sem);
-
-		}else {
-
-			send(asyner->conn, buffer, strlen(buffer), 0);
+			break;
+		}
+		else if (strcmp(buffer,"exit")==0)
+		{
+			//on condition of exit from this side
+			std::cout<<"[Get exit signal, client post the sem, quitting]"<<std::endl;
+			sem_post(&asyner->sem);
+			break;
+		}
+		else
+		{
 			//normal condition
 			std::cout<<"[sent out message]"<<std::endl;
 			//clear up the buffer
@@ -64,14 +60,14 @@ void* sub_client(void* a)
 	return NULL;
 }
 
-void* sub_server(void* a)
+void* sub_receiver(void* a)
 {
 	//get init data
 	thread_struct* asyner = (thread_struct*)a;
 
 	//get sem
 	sem_wait(&(asyner->sem));
-	std::cout << "server get sem"<<std::endl;
+	std::cout << "receiver get sem"<<std::endl;
 
 	//init buffer
 	char buffer[buffer_size];
@@ -79,23 +75,17 @@ void* sub_server(void* a)
 	while(1)
 	{
 		//recv from client
-		recv(asyner->conn, buffer, buffer_size,0);
-
-		if (strcmp(buffer,"x")==0){
-
-			//on condition of losing connection
-			std::cout<<"[losing connection, return to listen state]"<<std::endl;
+		if((strcmp(buffer,"exit")==0)||(recv(asyner->conn, buffer, buffer_size,0) <= 0))
+		{
+			//on condition of other side quite or receive failed
+			std::cout<<"[The connection of socket "<< asyner->conn <<" has down]"<<std::endl;
+			//set reconnecting flag
 			asyner->flag=-1;
 			sem_post(&asyner->sem);
-
-		}else if(strcmp(buffer,"exit")==0){
-
-			//on condition of both side exit
-			std::cout<<"[server post the sem, quitting from both side]"<<std::endl;
-			sem_post(&asyner->sem);
-
-		}else{
-
+			break;
+		}
+		else
+		{
 			//on condition of received a normal message
 			std::cout<<buffer<<"\n[receive a message]"<<std::endl;
 			//clear up the buffer
@@ -129,7 +119,7 @@ int start_cs(int conn,int flag)
 	sem_init(&asyner.sem, 0, 2);
 
 	//create thread
-	pthread_t server,client;
+	pthread_t sender,receiver;
 	int ret;
 
 	//int pthread_create(
@@ -138,22 +128,22 @@ int start_cs(int conn,int flag)
 	//		void *(*start_routine)(void*),		//thread entrance
 	//		void *arg)							//thread parameter
 
-	ret= pthread_create(&server, NULL, sub_server, &asyner);
+	ret= pthread_create(&sender, NULL, sub_sender, &asyner);
 	if(ret != 0)
 	{
-		perror("pthread_create");
+		perror("pthread_create error");
 		exit(1);
 	}
-	ret= pthread_create(&client, NULL, sub_client, &asyner);
+	ret= pthread_create(&receiver, NULL, sub_receiver, &asyner);
 	if(ret != 0)
 	{
-		perror("pthread_create");
+		perror("pthread_create error");
 		exit(1);
 	}
 
 	//detach threads
-	pthread_detach(server);
-	pthread_detach(client);
+	pthread_detach(sender);
+	pthread_detach(receiver);
 
 	sleep(1);
 
@@ -162,8 +152,8 @@ int start_cs(int conn,int flag)
 
 	//get sem, time to destroy threads
 	sem_destroy(&asyner.sem);
-	pthread_cancel(server);
-	pthread_cancel(client);
-
+	std::cout<<"[killing threads]"<<std::endl;
+	pthread_cancel(sender);
+	pthread_cancel(receiver);
 	return asyner.flag;
 }

@@ -3,27 +3,17 @@
 const int myport		=11010;
 const int queue_size	=20;
 
+void* socket_manager(void* conn)
+{
+	int sock  = *(int*)conn;
+	start_cs(sock,0);
+	close(sock);
+	return NULL;
+}
+
 int main(int argc, char* argv[])
 {
-	//define sockfd
-	//protofamily	:AF_INET represent IPV4
-	//type			:SOCK_STREAM represent Stream_socket
-	//Protocal		:IPPROTO_TCP represent TCP
-	//int socket(int protofamily, int type, int protocol);
-
 	int server_sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	int conn;
-	//define sockaddr_in
-	//
-	//struct sockaddr_in{
-	//sa_family_t		sin_family;	//address family: AF_INET
-	//in_port_t			sin_port;	//port in network byte order
-	//struct in_addr	sin_addr;	//internet address
-	//}
-	//
-	//struct sockaddr_in6{
-	//uint32_t			s_addr;		//address in network byte order
-	//}
 
 	struct sockaddr_in sock_server;
 	sock_server.sin_addr.s_addr=htonl(INADDR_ANY);
@@ -35,33 +25,45 @@ int main(int argc, char* argv[])
 	socklen_t lenth=sizeof(client_addr);
 
 	//establish bind
-	//
 	if(bind(server_sockfd,(struct sockaddr *)&sock_server,sizeof(sock_server))==-1)
 	{
 		perror("bind error");
 		exit(1);
 	}
 
-	do{
-		//start listen
-		//int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-		if(listen(server_sockfd, queue_size)==-1)
-		{
-			perror("lister error");
-			exit(1);
-		}
+	//start listen
+	if(listen(server_sockfd, queue_size)==-1)
+	{
+		std::cout<<"[listen get -1]"<<std::endl;
+		perror("lister error");
+		exit(1);
+	}
 
+	int conn;
+	pthread_t manager;
+
+	while(1)
+	{
+		//establish connection
 		conn = accept(server_sockfd, (struct sockaddr*)&client_addr, &lenth);
 		if(conn<0)
 		{
+			std::cout<<"[accept get -1]"<<std::endl;
 			perror("connect error");
 			exit(1);
 		}
-	}while(start_cs(conn,0)==-1);//launch client and server
 
-	close(conn);
+		//create a thread to manage the socket
+		if(pthread_create(&manager, NULL, socket_manager, &conn) != 0)
+		{
+			perror("pthread_create error");
+			exit(1);
+		}
+
+		//detach the thread
+		pthread_detach(manager);
+	}
 	close(server_sockfd);
 	return 0;
 }
-
 
