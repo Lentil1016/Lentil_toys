@@ -15,7 +15,7 @@ public:
 
 	int create_pipe();//done, will lock the mutex
 	const int buffer_lenth;
-
+	pthread_rwlock_t* get_subthread_lock();
 	int return_till_exit();//done
 private:
 	//constructor
@@ -30,8 +30,9 @@ private:
 	//variable
 	static std::auto_ptr<message_manager> m_instance;
 	std::list<int> pipe_list;
-	pthread_mutex_t pipe_list_mutex,run_flag_mutex;
+	pthread_mutex_t pipe_list_mutex,main_run_flag;
 	pthread_t stdin_watcher;
+	pthread_rwlock_t subthread_run_flag;
 };
 
 

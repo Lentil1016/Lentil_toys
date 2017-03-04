@@ -20,7 +20,6 @@ void* sub_thread::sub_sender(void* a)
 
 	//get sem
 	sem_wait(&(asyner->sem));
-	std::cout<< "sender get sem"<<std::endl;
 
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
@@ -32,22 +31,20 @@ void* sub_thread::sub_sender(void* a)
 		read(asyner->pipe,buffer,buffer_lenth);
 		if(send(asyner->conn, buffer, strlen(buffer), 0) <= 0)
 		{
-			std::cout<<"[sending failed]"<<std::endl;
+			std::cout<<"[connection "<<asyner->conn<<" sending failed, disconnecting]"<<std::endl;
 			//release sem
 			sem_post(&asyner->sem);
 			break;
 		}
 		else if (strcmp(buffer,"exit")==0)
 		{
-			//on condition of exit from this side
-			std::cout<<"[Get exit signal, client post the sem, quitting]"<<std::endl;
+			//on condition of disconnect
 			sem_post(&asyner->sem);
 			break;
 		}
 		else
 		{
 			//normal condition
-			std::cout<<"[sent out message]"<<std::endl;
 			//clear up the buffer
 			memset(buffer,0,strlen(buffer));
 		}
@@ -62,7 +59,6 @@ void* sub_thread::sub_receiver(void* a)
 
 	//get sem
 	sem_wait(&(asyner->sem));
-	std::cout << "receiver get sem"<<std::endl;
 
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
@@ -81,7 +77,7 @@ void* sub_thread::sub_receiver(void* a)
 		else
 		{
 			//on condition of received a normal message
-			std::cout<<buffer<<"\n[receive a message]"<<std::endl;
+			std::cout<<buffer<<"\n[receive a message from "<<asyner->conn<<"]"<<std::endl;
 			//clear up the buffer
 			memset(buffer,0,strlen(buffer));
 		}
@@ -91,11 +87,11 @@ void* sub_thread::sub_receiver(void* a)
 
 int sub_thread::help()
 {
-	std::cout<<"=============help=============\n"\
-		<<"x		--kill this side\n"
-		<<"exit		--kill both side\n"
-		<<"others	--send normal message\n"
-		<<"==============================\n";
+	//std::cout<<"=============help=============\n"\
+	//	<<"x		--kill this side\n"
+	//	<<"exit		--kill both side\n"
+	//	<<"others	--send normal message\n"
+	//	<<"==============================\n";
 	return 0;
 }
 
@@ -140,18 +136,19 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	//detach threads
 	pthread_detach(sender);
 	pthread_detach(receiver);
-
+	pthread_rwlock_rdlock(message_manager::get_instance()->get_subthread_lock());
 	sleep(1);
-
+	std::cout<<"[connection on "<<asyner.conn<<" is established]"<<std::endl;
 	//std::cout<<"thread init done"<<std::endl;
 	sem_wait(&asyner.sem);
 
 	//get sem, time to destroy threads
 	sem_destroy(&asyner.sem);
-	std::cout<<"[killing threads]"<<std::endl;
 	pthread_cancel(sender);
 	pthread_cancel(receiver);
 	close(asyner.conn);
+	pthread_rwlock_unlock(message_manager::get_instance()->get_subthread_lock());
+	std::cout<<"[connection on "<<asyner.conn<<" is down]"<<std::endl;
 	close(asyner.pipe);
 	return NULL;
 }

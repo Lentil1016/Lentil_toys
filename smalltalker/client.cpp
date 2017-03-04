@@ -40,7 +40,7 @@ int main()
 			{
 				//start reconnection
 				retry++;
-				std::cout<<"[connect fail, retry in 3 seconds]"<<std::endl;
+				std::cout<<"[connection is down, retry in 3 seconds]"<<std::endl;
 				sleep(3);
 			}
 			if(retry=max_retry)//on condition of retry timeout

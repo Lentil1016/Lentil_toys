@@ -25,7 +25,6 @@ thread_manager::thread_manager():myport(11010),queue_size(20)
 		perror("bind error");
 		exit(1);
 	}
-	std::cout<<"[bind succeed]"<<std::endl;
 
 	//start listen
 	if(listen(listen_sock, queue_size)==-1)
@@ -34,11 +33,9 @@ thread_manager::thread_manager():myport(11010),queue_size(20)
 		perror("lister error");
 		exit(1);
 	}
-	std::cout<<"[listen start at "<< listen_sock<<"]"<<std::endl;
 
 	pthread_create(&listener_thread, NULL, listener, NULL);
 	pthread_detach(listener_thread);
-	std::cout<<"[start listener]"<<std::endl;
 }
 
 //accept connections and initialize a pipe for message_manager
@@ -52,7 +49,6 @@ void* thread_manager::listener(void*)
 	pthread_t manager;
 	int pipe_fd[2];
 	//start and keep listening
-	std::cout<<"[listen is "<<listen<<"]"<<std::endl;
 	while(1)
 	{
 		//establish connection
