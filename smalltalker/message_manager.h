@@ -6,6 +6,7 @@
 #include<list>
 #include<stdlib.h>
 #include<memory>
+#include<log4cpp/Category.hh>
 
 class message_manager
 {
@@ -33,6 +34,7 @@ private:
 	pthread_mutex_t pipe_list_mutex,main_run_flag;
 	pthread_t stdin_watcher;
 	pthread_rwlock_t subthread_run_flag;
+	log4cpp::Category& log;
 };
 
 

@@ -1,13 +1,26 @@
 #include"message_manager.h"
 #include"thread_manager.h"
+#include"subthread_s.h"
+#include<log4cpp/Category.hh>
+#include<log4cpp/PropertyConfigurator.hh>
 
 int main(int argc, char* argv[])
 {
-	pthread_mutex_t run_flag;
-	pthread_mutex_init(&run_flag, NULL);
-	//TODO:finish the exit of main
+	try{
+		log4cpp::PropertyConfigurator::configure("./log.conf");
+	}catch(log4cpp::ConfigureFailure& f){
+		std::cout<<"Configure Problem "<<f.what()<<std::endl;
+	}
 
-	message_manager* mmp=message_manager::get_instance();
+	log4cpp::Category& log = log4cpp::Category::getInstance(std::string("server"));
+
+	log.notice("log4cpp init done");
+
 	thread_manager* tmp=thread_manager::get_instance();
+	message_manager* mmp=message_manager::get_instance();
+	sub_thread* stp=sub_thread::get_instance();
+
+	log.debug("server is blocked now");
 	mmp->return_till_exit();
+	log.debug("server is going to quit now");
 }

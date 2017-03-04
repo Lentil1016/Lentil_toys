@@ -4,6 +4,7 @@
 #include<list>
 #include<unistd.h>
 #include<memory>
+#include<log4cpp/Category.hh>
 
 class thread_manager
 {
@@ -25,6 +26,7 @@ private:
 	static std::auto_ptr<thread_manager> m_instance;
 	int listen_sock;
 	pthread_t listener_thread;
+	log4cpp::Category& log;
 
 	//constants
 	const int myport;

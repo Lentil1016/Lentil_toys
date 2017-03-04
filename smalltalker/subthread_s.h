@@ -12,6 +12,8 @@
 
 #include"socket"
 
+#include<log4cpp/Category.hh>
+
 struct thread_struct
 {
 	int conn;
@@ -34,6 +36,7 @@ private:
 	static std::auto_ptr<sub_thread> m_instance;
 	const size_t buffer_size;
 	sub_thread* m_sub_thread;
+	log4cpp::Category& log;
 
 	//method
 	static void* sub_sender(void* a);
