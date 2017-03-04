@@ -32,9 +32,11 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	pthread_t sub_thread;
-	pthread_create(&sub_thread, NULL, sub_func, &pipe_fd[0]);
-	pthread_detach(sub_thread);
+	pthread_t sub_thread1,sub_thread2;
+	pthread_create(&sub_thread1, NULL, sub_func, &pipe_fd[0]);
+	pthread_create(&sub_thread2, NULL, sub_func, &pipe_fd[0]);
+	pthread_detach(sub_thread1);
+	pthread_detach(sub_thread2);
 
 	char buffer[100];
 	while(1)

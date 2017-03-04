@@ -70,7 +70,6 @@ void* sub_thread::sub_receiver(void* a)
 		if((recv(asyner->conn, buffer, buffer_lenth,0) <= 0)||(strcmp(buffer,"exit")==0))
 		{
 			//on condition of other side quite or receive failed
-			std::cout<<"[The connection of socket "<< asyner->conn <<" has down]"<<std::endl;
 			sem_post(&asyner->sem);
 			break;
 		}
