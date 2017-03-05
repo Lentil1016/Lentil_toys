@@ -25,6 +25,23 @@ message_manager* message_manager::get_instance()
 	return m_instance.get();
 }
 
+void message_manager::close_pipe(int pipe)
+{
+	log.debug("close get mutex, closing");
+	pthread_mutex_lock(&pipe_list_mutex);
+	for(std::vector<std::pair<int, int> >::iterator i=pipe_list.begin();\
+			i!=pipe_list.end();i++)
+		if(i->first==pipe)
+		{
+			close(i->first);
+			close(i->second);
+			//pipe_list.erase(i);
+			std::cout<<"count : "<<pipe_list.size()<<std::endl;
+		}
+	pthread_mutex_unlock(&pipe_list_mutex);
+	log.debug("close release mutex");
+}
+
 int message_manager::create_pipe()
 {
 	int pipe_fd[2];
@@ -33,15 +50,17 @@ int message_manager::create_pipe()
 		log.warn("pipe create failed");
 		return -1;
 	}
-	add_pipe_tolist(pipe_fd[1]);
+	add_pipe_tolist(std::make_pair(pipe_fd[0],pipe_fd[1]));
 	return pipe_fd[0];
 }
 
-int message_manager::add_pipe_tolist(int pipefd)
+int message_manager::add_pipe_tolist(std::pair<int,int> pipefd)
 {
+	log.debug("add get mutex, adding");
 	pthread_mutex_lock(&pipe_list_mutex);
 	pipe_list.push_back(pipefd);
 	pthread_mutex_unlock(&pipe_list_mutex);
+	log.debug("add release mutex");
 	return 0;
 }
 
@@ -49,8 +68,8 @@ int message_manager::broadcast(const char* buffer)
 {
 	pthread_mutex_lock(&pipe_list_mutex);
 	log.debug("broadcast get mutex, broadcasting");
-	for(std::list<int>::iterator i=pipe_list.begin(); i!=pipe_list.end();i++)
-		write(*i,buffer,buffer_lenth);
+	for(std::vector<std::pair<int,int> >::iterator i=pipe_list.begin(); i!=pipe_list.end();i++)
+		write(i->second,buffer,buffer_lenth);
 
 	pthread_mutex_unlock(&pipe_list_mutex);
 	log.debug("broadcast release mutex");
@@ -90,7 +109,5 @@ message_manager::~message_manager()
 {
 	pthread_rwlock_destroy(&subthread_run_flag);
 	pthread_mutex_destroy(&main_run_flag);
-	for(std::list<int>::iterator i=pipe_list.begin(); i!=pipe_list.end();i++)
-		close(*i);
 	pthread_mutex_destroy(&pipe_list_mutex);
 }

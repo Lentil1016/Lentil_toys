@@ -177,6 +177,6 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	oss.str("");
 	oss<<"connection on "<<asyner.conn<<" is closed";
 	m_instance->log.debug(oss.str().c_str());
-	close(asyner.pipe);
+	message_manager::get_instance()->close_pipe(asyner.pipe);
 	return NULL;
 }
