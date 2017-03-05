@@ -35,8 +35,8 @@ void message_manager::close_pipe(int pipe)
 		{
 			close(i->first);
 			close(i->second);
-			//pipe_list.erase(i);
-			std::cout<<"count : "<<pipe_list.size()<<std::endl;
+			pipe_list.erase(i);
+			break;
 		}
 	pthread_mutex_unlock(&pipe_list_mutex);
 	log.debug("close release mutex");
