@@ -18,7 +18,8 @@ struct thread_struct
 {
 	int conn;
 	int pipe;
-	sem_t sem;
+	sem_t* run_sem;
+	sem_t* init_sem;
 };
 
 class sub_thread

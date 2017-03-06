@@ -24,7 +24,9 @@ void* sub_thread::sub_sender(void* a)
 	thread_struct* asyner = (thread_struct*)a;
 
 	//get sem
-	sem_wait(&(asyner->sem));
+	sem_wait(asyner->run_sem);
+	sem_post(asyner->init_sem);
+	m_instance->log.debug("sender post sem");
 
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
@@ -41,7 +43,7 @@ void* sub_thread::sub_sender(void* a)
 			oss<<"connection "<<asyner->conn<<" sending failed, disconnecting";
 			m_instance->log.debug(oss.str().c_str());
 			//release sem
-			sem_post(&asyner->sem);
+			sem_post(asyner->run_sem);
 			break;
 		}
 		else if (strcmp(buffer,"exit")==0)
@@ -51,7 +53,7 @@ void* sub_thread::sub_sender(void* a)
 			oss<<"connection "<<asyner->conn<<" receive exit signal from server, disconnecting";
 			m_instance->log.debug(oss.str().c_str());
 			//release sem
-			sem_post(&asyner->sem);
+			sem_post(asyner->run_sem);
 			break;
 		}
 		else
@@ -73,7 +75,9 @@ void* sub_thread::sub_receiver(void* a)
 	thread_struct* asyner = (thread_struct*)a;
 
 	//get sem
-	sem_wait(&(asyner->sem));
+	sem_wait(asyner->run_sem);
+	sem_post(asyner->init_sem);
+	m_instance->log.debug("receiver post sem");
 
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
@@ -89,7 +93,7 @@ void* sub_thread::sub_receiver(void* a)
 			oss.str("");
 			oss<<"connection "<<asyner->conn<<" is down";
 			m_instance->log.debug(oss.str().c_str());
-			sem_post(&asyner->sem);
+			sem_post(asyner->run_sem);
 			break;
 		}
 		else
@@ -124,13 +128,21 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	help();
 
 	//create asyner
-	struct thread_struct asyner;
-	asyner.conn=*(int*)conn_pipe;
-	asyner.pipe=*(((int*)conn_pipe)+1);
+	struct thread_struct send_asyner, recv_asyner;
+	send_asyner.conn=recv_asyner.conn=*(int*)conn_pipe;
+	send_asyner.pipe=recv_asyner.pipe=*(((int*)conn_pipe)+1);
 	//std::cout<<"conn = "<<asyner.conn<<std::endl;
 
 	//init sem
-	sem_init(&asyner.sem, 0, 2);
+	//this init_sem will be available after sender thread get asyner.sem
+	//which can shows the sender thread has init done.
+	sem_t send_sem, recv_sem, run_sem;
+	sem_init(&run_sem, 0, 2);
+	sem_init(&send_sem, 0, 0);
+	sem_init(&recv_sem, 0, 0);
+	recv_asyner.run_sem = send_asyner.run_sem = &run_sem;
+	recv_asyner.init_sem = &recv_sem;
+	send_asyner.init_sem = &send_sem;
 
 	//create thread
 	pthread_t sender,receiver;
@@ -142,13 +154,14 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	//		void *(*start_routine)(void*),		//thread entrance
 	//		void *arg)							//thread parameter
 
-	ret= pthread_create(&sender, NULL, sub_sender, &asyner);
+	ret= pthread_create(&sender, NULL, sub_sender, &send_asyner);
 	if(ret != 0)
 	{
 		m_instance->log.error("pthread_create error");
 		exit(1);
 	}
-	ret= pthread_create(&receiver, NULL, sub_receiver, &asyner);
+
+	ret= pthread_create(&receiver, NULL, sub_receiver, &recv_asyner);
 	if(ret != 0)
 	{
 		m_instance->log.error("pthread_create error");
@@ -162,21 +175,28 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	m_instance->log.debug("create sender and receiver thread for subthread");
 
 	pthread_rwlock_rdlock(message_manager::get_instance()->get_subthread_lock());
-	sleep(1);
-	oss<<"connection on "<<asyner.conn<<" is established";
+	oss<<"connection on "<<send_asyner.conn<<" is established";
 	m_instance->log.debug(oss.str().c_str());
 	//std::cout<<"thread init done"<<std::endl;
-	sem_wait(&asyner.sem);
+
+	sem_wait(&send_sem);
+	sem_wait(&recv_sem);
+	sem_destroy(&send_sem);
+	sem_destroy(&recv_sem);
+	//both receiver and sender init done
+	//wait for either of them release sem
+	//so rs_manager will close the connection and threads
+	sem_wait(&run_sem);
 
 	//get sem, time to destroy threads
-	sem_destroy(&asyner.sem);
+	sem_destroy(&run_sem);
 	pthread_cancel(sender);
 	pthread_cancel(receiver);
-	close(asyner.conn);
+	close(send_asyner.conn);
 	pthread_rwlock_unlock(message_manager::get_instance()->get_subthread_lock());
 	oss.str("");
-	oss<<"connection on "<<asyner.conn<<" is closed";
+	oss<<"connection on "<<send_asyner.conn<<" is closed";
 	m_instance->log.debug(oss.str().c_str());
-	message_manager::get_instance()->close_pipe(asyner.pipe);
+	message_manager::get_instance()->close_pipe(send_asyner.pipe);
 	return NULL;
 }
