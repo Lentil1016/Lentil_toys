@@ -27,7 +27,7 @@ message_manager* message_manager::get_instance()
 
 void message_manager::close_pipe(int pipe)
 {
-	log.debug("close get mutex, closing");
+	log.debug("close_pipe get mutex, closing");
 	pthread_mutex_lock(&pipe_list_mutex);
 	for(std::vector<std::pair<int, int> >::iterator i=pipe_list.begin();\
 			i!=pipe_list.end();i++)
@@ -39,7 +39,7 @@ void message_manager::close_pipe(int pipe)
 			break;
 		}
 	pthread_mutex_unlock(&pipe_list_mutex);
-	log.debug("close release mutex");
+	log.debug("close_pipe release mutex");
 }
 
 int message_manager::create_pipe()
@@ -56,23 +56,23 @@ int message_manager::create_pipe()
 
 int message_manager::add_pipe_tolist(std::pair<int,int> pipefd)
 {
-	log.debug("add get mutex, adding");
+	log.debug("add_pipe get mutex, adding");
 	pthread_mutex_lock(&pipe_list_mutex);
 	pipe_list.push_back(pipefd);
 	pthread_mutex_unlock(&pipe_list_mutex);
-	log.debug("add release mutex");
+	log.debug("add_pipe release mutex");
 	return 0;
 }
 
 int message_manager::broadcast(const char* buffer)
 {
 	pthread_mutex_lock(&pipe_list_mutex);
-	log.debug("broadcast get mutex, broadcasting");
+	log.debug("broadcast_pipe get mutex, broadcasting");
 	for(std::vector<std::pair<int,int> >::iterator i=pipe_list.begin(); i!=pipe_list.end();i++)
 		write(i->second,buffer,buffer_lenth);
 
 	pthread_mutex_unlock(&pipe_list_mutex);
-	log.debug("broadcast release mutex");
+	log.debug("broadcast_pipe release mutex");
 	return 0;
 }
 

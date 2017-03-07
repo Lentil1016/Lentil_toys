@@ -18,8 +18,9 @@ struct thread_struct
 {
 	int conn;
 	int pipe;
-	sem_t* run_sem;
-	sem_t* init_sem;
+	bool is_running;
+	pthread_cond_t* cond;
+	pthread_mutex_t* cond_mutex;
 };
 
 class sub_thread
@@ -43,6 +44,7 @@ private:
 	static void* sub_sender(void* a);
 	static void* sub_receiver(void* a);
 	static int help();
+	static void release_cond(thread_struct*);
 };
 
 #endif

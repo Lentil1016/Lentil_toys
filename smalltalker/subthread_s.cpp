@@ -23,11 +23,6 @@ void* sub_thread::sub_sender(void* a)
 	//get init data
 	thread_struct* asyner = (thread_struct*)a;
 
-	//get sem
-	sem_wait(asyner->run_sem);
-	sem_post(asyner->init_sem);
-	m_instance->log.debug("sender post sem");
-
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
 	char buffer[buffer_lenth];
@@ -42,8 +37,8 @@ void* sub_thread::sub_sender(void* a)
 			oss.str("");
 			oss<<"connection "<<asyner->conn<<" sending failed, disconnecting";
 			m_instance->log.debug(oss.str().c_str());
-			//release sem
-			sem_post(asyner->run_sem);
+			//release cond
+			release_cond(asyner);
 			break;
 		}
 		else if (strcmp(buffer,"exit")==0)
@@ -52,8 +47,8 @@ void* sub_thread::sub_sender(void* a)
 			oss.str("");
 			oss<<"connection "<<asyner->conn<<" receive exit signal from server, disconnecting";
 			m_instance->log.debug(oss.str().c_str());
-			//release sem
-			sem_post(asyner->run_sem);
+			//release cond
+			release_cond(asyner);
 			break;
 		}
 		else
@@ -74,11 +69,6 @@ void* sub_thread::sub_receiver(void* a)
 	//get init data
 	thread_struct* asyner = (thread_struct*)a;
 
-	//get sem
-	sem_wait(asyner->run_sem);
-	sem_post(asyner->init_sem);
-	m_instance->log.debug("receiver post sem");
-
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
 	char buffer[buffer_lenth];
@@ -93,7 +83,7 @@ void* sub_thread::sub_receiver(void* a)
 			oss.str("");
 			oss<<"connection "<<asyner->conn<<" is down";
 			m_instance->log.debug(oss.str().c_str());
-			sem_post(asyner->run_sem);
+			release_cond(asyner);
 			break;
 		}
 		else
@@ -101,7 +91,7 @@ void* sub_thread::sub_receiver(void* a)
 			//on condition of received a normal message
 			oss.str("");
 			oss<<"receive a message from connection "<<asyner->conn<<" : "<<buffer;
-			std::cout<<buffer<<"\n[receive a message from"<<asyner->conn<<"]\n";
+			std::cout<<buffer<<"\n[receive a message from "<<asyner->conn<<"]\n";
 			m_instance->log.debug(oss.str().c_str());
 			//clear up the buffer
 			memset(buffer,0,strlen(buffer));
@@ -120,6 +110,14 @@ int sub_thread::help()
 	return 0;
 }
 
+void sub_thread::release_cond(thread_struct* asyner)
+{
+	pthread_mutex_lock(asyner->cond_mutex);
+	asyner->is_running=false;
+	pthread_mutex_unlock(asyner->cond_mutex);
+	pthread_cond_signal(asyner->cond);
+}
+
 //communicate with net through a connection and user message through a pipe
 //manage a receiver thread and a sender thread.
 void* sub_thread::rs_manager(void* conn_pipe)
@@ -127,22 +125,23 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	std::ostringstream oss;
 	help();
 
-	//create asyner
-	struct thread_struct send_asyner, recv_asyner;
-	send_asyner.conn=recv_asyner.conn=*(int*)conn_pipe;
-	send_asyner.pipe=recv_asyner.pipe=*(((int*)conn_pipe)+1);
+	//init asyner
+	struct thread_struct asyner;
+	asyner.conn=*(int*)conn_pipe;
+	asyner.pipe=*(((int*)conn_pipe)+1);
+	asyner.is_running=true;
 	//std::cout<<"conn = "<<asyner.conn<<std::endl;
 
-	//init sem
-	//this init_sem will be available after sender thread get asyner.sem
-	//which can shows the sender thread has init done.
-	sem_t send_sem, recv_sem, run_sem;
-	sem_init(&run_sem, 0, 2);
-	sem_init(&send_sem, 0, 0);
-	sem_init(&recv_sem, 0, 0);
-	recv_asyner.run_sem = send_asyner.run_sem = &run_sem;
-	recv_asyner.init_sem = &recv_sem;
-	send_asyner.init_sem = &send_sem;
+	//init cond
+	pthread_mutex_t cond_mutex;
+	pthread_cond_t cond;
+	pthread_mutex_init(&cond_mutex, NULL);
+	pthread_cond_init(&cond, NULL);
+	//init cond done
+
+	asyner.cond = &cond;
+	asyner.cond_mutex = &cond_mutex;
+	//init asyner done
 
 	//create thread
 	pthread_t sender,receiver;
@@ -154,14 +153,14 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	//		void *(*start_routine)(void*),		//thread entrance
 	//		void *arg)							//thread parameter
 
-	ret= pthread_create(&sender, NULL, sub_sender, &send_asyner);
+	ret= pthread_create(&sender, NULL, sub_sender, &asyner);
 	if(ret != 0)
 	{
 		m_instance->log.error("pthread_create error");
 		exit(1);
 	}
 
-	ret= pthread_create(&receiver, NULL, sub_receiver, &recv_asyner);
+	ret= pthread_create(&receiver, NULL, sub_receiver, &asyner);
 	if(ret != 0)
 	{
 		m_instance->log.error("pthread_create error");
@@ -175,28 +174,27 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	m_instance->log.debug("create sender and receiver thread for subthread");
 
 	pthread_rwlock_rdlock(message_manager::get_instance()->get_subthread_lock());
-	oss<<"connection on "<<send_asyner.conn<<" is established";
+	oss<<"connection on "<<asyner.conn<<" is established";
 	m_instance->log.debug(oss.str().c_str());
 	//std::cout<<"thread init done"<<std::endl;
 
-	sem_wait(&send_sem);
-	sem_wait(&recv_sem);
-	sem_destroy(&send_sem);
-	sem_destroy(&recv_sem);
-	//both receiver and sender init done
-	//wait for either of them release sem
-	//so rs_manager will close the connection and threads
-	sem_wait(&run_sem);
+	//keep blocking here until sender or receiver threads quit
+	pthread_mutex_lock(&cond_mutex);
+	//critical area for cond
+	while(asyner.is_running)//prevent from spurious wakeup
+		pthread_cond_wait(&cond, &cond_mutex);
+	pthread_mutex_unlock(&cond_mutex);
 
-	//get sem, time to destroy threads
-	sem_destroy(&run_sem);
+	//get cond, time to destroy threads
 	pthread_cancel(sender);
 	pthread_cancel(receiver);
-	close(send_asyner.conn);
+	pthread_mutex_destroy(&cond_mutex);
+	pthread_cond_destroy(&cond);
+	close(asyner.conn);
 	pthread_rwlock_unlock(message_manager::get_instance()->get_subthread_lock());
 	oss.str("");
-	oss<<"connection on "<<send_asyner.conn<<" is closed";
+	oss<<"manager thread for connection on "<<asyner.conn<<" is closed";
 	m_instance->log.debug(oss.str().c_str());
-	message_manager::get_instance()->close_pipe(send_asyner.pipe);
+	message_manager::get_instance()->close_pipe(asyner.pipe);
 	return NULL;
 }
