@@ -5,10 +5,22 @@ using namespace boost;
 
 read_guard::read_guard():_host_ptr(new vector<string>),log(log4cpp::Category::getInstance(std::string("index")))
 {
+#ifdef DEBUG_LENTIL
+	query_times=0;
+	copy_times=0;
+	push_back_times=0;
+#endif
 }
 
 read_guard::~read_guard()
 {
+#ifdef DEBUG_LENTIL
+	cout<<"==============================="<<\
+		"\nquery_times = "<<query_times<<\
+		"\npush_back_times = "<<push_back_times<<\
+		"\ncopy_times = "<<copy_times<<\
+		"\n==============================="<<endl;
+#endif
 }
 
 bool read_guard::verify(int index, const string& match)
@@ -70,6 +82,7 @@ string read_guard::query(int index)
 		oss.str("");
 		oss<<"query a string \""<<(*data_ptr)[index].c_str()<<"\" at "<<index<<endl;
 		log.debug(oss.str().c_str());
+		query_times++;
 #endif
 		return (*data_ptr)[index];
 	}
@@ -79,7 +92,9 @@ string read_guard::query(int index)
 bool read_guard::push_back(const std::string& match)
 {
 	lock_guard<mutex> locker(_host_ptr_mutex);
-
+#ifdef DEBUG_LENTIL
+	push_back_times++;
+#endif
 	//push_back won't lead to a reallocation?
 	//or no other reader or writer?
 
@@ -109,6 +124,7 @@ bool read_guard::push_back(const std::string& match)
 		oss<<"push_back \""<<match.c_str()<<"\" on COPY, size is "<<copy_ptr->size()<<\
 			", capacity is "<<copy_ptr->capacity()<<", old use count is "<< _host_ptr.use_count();
 		log.debug(oss.str().c_str());
+		copy_times++;
 #endif
 		copy_ptr->push_back(match);
 
@@ -129,6 +145,9 @@ bool read_guard::push_back(const std::string& match)
 bool read_guard::assign(int index,const string& match)
 {
 	lock_guard<mutex> locker(_host_ptr_mutex);
+#ifdef DEBUG_LENTIL
+	push_back_times++;
+#endif
 	check_bound(index);
 	if(is_exclusive())
 	{
@@ -155,6 +174,7 @@ bool read_guard::assign(int index,const string& match)
 		oss<<"assign \""<<match.c_str()<<"\" on "<<index<<" COPY, size is "<<_host_ptr->size()<<\
 			", capacity is "<<_host_ptr->capacity()<<", use count is "<< _host_ptr.use_count();
 		log.debug(oss.str().c_str());
+		copy_times++;
 #endif
 		//update _host_ptr's reference to the copy
 		_host_ptr_mutex.lock();

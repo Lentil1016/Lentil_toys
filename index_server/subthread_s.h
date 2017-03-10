@@ -12,6 +12,7 @@
 #include<memory>
 
 #include"socket"
+#include"message_parser.h"
 
 #include<log4cpp/Category.hh>
 
@@ -20,6 +21,7 @@ struct thread_struct
 	int conn;
 	int pipe;
 	bool is_running;
+	message_parser* parser;
 	pthread_cond_t* cond;
 	pthread_mutex_t* cond_mutex;
 };
@@ -37,7 +39,6 @@ private:
 
 	//variable
 	static std::auto_ptr<sub_thread> m_instance;
-	const size_t buffer_size;
 	sub_thread* m_sub_thread;
 	log4cpp::Category& log;
 

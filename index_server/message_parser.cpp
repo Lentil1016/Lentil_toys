@@ -16,10 +16,12 @@ message_parser::message_parser()
 message_parser& message_parser::operator<< (const char* buffer)
 {
 	pthread_mutex_lock(&ss_mutex);
-	if(ss.tellg()>10000)
+	if(ss.tellg() == ss.tellp() && ss.tellg()>50000)
+	{
 		ss.seekg(0);
-	if(ss.tellp()>10000)
 		ss.seekp(0);
+		//std::cout<<"---------------\n[reset ss!]\n---------------------"<<std::endl;
+	}
 	ss<<buffer;
 	pthread_mutex_unlock(&ss_mutex);
 }
@@ -31,8 +33,10 @@ message_parser::message_parser(const message_parser&)
 
 message_parser::~message_parser()
 {
+	pthread_mutex_lock(&ss_mutex);
 	pthread_cancel(parser);
 	pthread_mutex_destroy(&ss_mutex);
+	std::cout<<"message_parser quitted"<<std::endl;
 }
 
 void* message_parser::parsing(void* a)
@@ -42,6 +46,7 @@ void* message_parser::parsing(void* a)
 	int index=0;
 	while(1)
 	{
+		pthread_mutex_lock(_struct.ss_mutex);
 		while(_struct.ss->tellg()<_struct.ss->tellp())
 		{
 			index = 0;
@@ -60,7 +65,7 @@ void* message_parser::parsing(void* a)
 			{
 				index = index * 10 + *blank1-48;
 			}
-			std::cout<<"["<<order<<" "<<index<<" "<<match<<"]"<<std::endl;
+			//std::cout<<"["<<order<<" "<<index<<" "<<match<<"]"<<std::endl;
 			try
 			{
 				if(order == "verify")
@@ -90,8 +95,9 @@ void* message_parser::parsing(void* a)
 			}
 			catch(char const* e)
 			{
-				std::cout<<e<<std::endl;
+				//std::cout<<e<<std::endl;
 			}
 		}
+		pthread_mutex_unlock(_struct.ss_mutex);
 	}
 }

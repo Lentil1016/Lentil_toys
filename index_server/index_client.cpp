@@ -19,18 +19,18 @@ void* push(void* a)
 	while(i<120)
 	{
 		oss.str("");
-		oss<<"push_back  "<<rand()<<"\n";
+		oss<<"push_back  "<<rand()/19910<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		if(i>20)
+		if(i>10)
 			sleep(1);
 		oss.str("");
 		oss<<"push_back  "<<rand()<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		if(i>20)
+		if(i>10)
 			sleep(1);
 	}
 }

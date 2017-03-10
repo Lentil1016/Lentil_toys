@@ -6,7 +6,7 @@
 
 std::auto_ptr<message_manager> message_manager::m_instance(NULL);
 
-message_manager::message_manager():buffer_lenth(100),\
+message_manager::message_manager():buffer_lenth(1024),\
 					 log(log4cpp::Category::getInstance(std::string("subthread")))
 {
 	pthread_mutex_init(&pipe_list_mutex, NULL);

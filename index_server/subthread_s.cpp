@@ -1,13 +1,12 @@
 //#define INDEX_SERVER
 #include"subthread_s.h"
-#include"message_parser.h"
 #include"message_manager.h"
 #include<log4cpp/Category.hh>
 #include<string>
 
 std::auto_ptr<sub_thread> sub_thread::m_instance(NULL);
 
-sub_thread::sub_thread():buffer_size(1024),log(log4cpp::Category::getInstance(std::string("subthread")))
+sub_thread::sub_thread():log(log4cpp::Category::getInstance(std::string("subthread")))
 {
 	log.debug("subthread init done");
 }
@@ -74,7 +73,7 @@ void* sub_thread::sub_receiver(void* a)
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
 	char buffer[buffer_lenth];
 	std::ostringstream oss;
-	message_parser parser;
+
 	memset(buffer,'\0',buffer_lenth);
 
 
@@ -94,8 +93,7 @@ void* sub_thread::sub_receiver(void* a)
 		{
 			//on condition of received a normal message
 #ifdef INDEX_SERVER
-			parser<<buffer;
-			std::cout<<buffer<<"\n"<<std::endl;
+			*(asyner->parser)<<buffer;
 #endif
 			oss.str("");
 			oss<<"receive a message from connection "<<asyner->conn<<" : "<<buffer;
@@ -130,6 +128,7 @@ void sub_thread::release_cond(thread_struct* asyner)
 //manage a receiver thread and a sender thread.
 void* sub_thread::rs_manager(void* conn_pipe)
 {
+	message_parser parser;
 	std::ostringstream oss;
 	help();
 
@@ -137,6 +136,7 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	struct thread_struct asyner;
 	asyner.conn=*(int*)conn_pipe;
 	asyner.pipe=*(((int*)conn_pipe)+1);
+	asyner.parser = &parser;
 	asyner.is_running=true;
 	//std::cout<<"conn = "<<asyner.conn<<std::endl;
 

@@ -52,6 +52,11 @@ private:
 	inline void update_host_ptr(const boost::shared_ptr<std::vector<std::string> >&);
 	inline void copy_from_host(boost::shared_ptr<std::vector<std::string> >&);
 
+#ifdef DEBUG_LENTIL
+	int query_times;
+	int copy_times;
+	int push_back_times;
+#endif
 	//other methods, no need to lock
 	inline bool check_bound(int);
 };
