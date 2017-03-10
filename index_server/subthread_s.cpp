@@ -1,11 +1,9 @@
-#define INDEX_SERVER
+//#define INDEX_SERVER
 #include"subthread_s.h"
+#include"message_parser.h"
 #include"message_manager.h"
 #include<log4cpp/Category.hh>
-#include"read_guard.h"
 #include<string>
-
-extern read_guard guard;
 
 std::auto_ptr<sub_thread> sub_thread::m_instance(NULL);
 
@@ -75,7 +73,10 @@ void* sub_thread::sub_receiver(void* a)
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
 	char buffer[buffer_lenth];
-	std::ostringstream oss, recv_oss;
+	std::ostringstream oss;
+	message_parser parser;
+	memset(buffer,'\0',buffer_lenth);
+
 
 	while(1)
 	{
@@ -93,7 +94,8 @@ void* sub_thread::sub_receiver(void* a)
 		{
 			//on condition of received a normal message
 #ifdef INDEX_SERVER
-			message_processor();
+			parser<<buffer;
+			std::cout<<buffer<<"\n"<<std::endl;
 #endif
 			oss.str("");
 			oss<<"receive a message from connection "<<asyner->conn<<" : "<<buffer;
@@ -204,53 +206,3 @@ void* sub_thread::rs_manager(void* conn_pipe)
 	message_manager::get_instance()->close_pipe(asyner.pipe);
 	return NULL;
 }
-
-#ifdef INDEX_SERVER
-void sub_thread::message_processor()
-{
-	char buffer[1024];
-	int index=0;
-
-
-	char* blank1 = strchr(buffer,' '), *blank2 = strrchr(buffer, ' ');
-	if (blank1==blank2)
-		return;
-	std::string order(buffer, blank1-buffer);
-	std::string match(blank2+1 ,buffer + strlen(buffer) - blank2);
-	for(blank1++; blank1!=blank2; blank1++)
-	{
-		index = index * 10 + *blank1-48;
-	}
-	try
-	{
-		if(order == "verify")
-		{
-			guard.verify(1,match);
-		}
-		else if(order == "query")
-		{
-			guard.query(index);
-		}
-		else if(order == "find")
-		{
-			guard.find(match);
-		}
-		else if(order == "push_back")
-		{
-			guard.push_back(match);
-		}
-		else if(order == "assign")
-		{
-			guard.assign(index, match);
-		}
-		else if(order == "erase")
-		{
-			guard.erase(index);
-		}
-	}
-	catch(char const* e)
-	{
-		std::cout<<e<<std::endl;
-	}
-}
-#endif

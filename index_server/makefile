@@ -6,7 +6,7 @@ all: client server index_client
 index_client: index_client.cpp
 	g++ -g -o $@ $^ ${LD_FLAG}
 
-server: server.cpp message_manager.o thread_manager.o subthread_s.o read_guard.o
+server: server.cpp message_manager.o thread_manager.o subthread_s.o read_guard.o message_parser.o
 	g++ -g -o $@ $^ ${LD_FLAG}
 
 client: client.cpp subthread_c.h socket
@@ -22,4 +22,7 @@ subthread_s.o: subthread_s.cpp
 	g++ -c -g -o $@ $^ ${LD_FLAG}
 
 read_guard.o: read_guard.cpp
-	g++ -c -g -o $@ $^ ${LD_FLAG} 
+	g++ -c -g -o $@ $^ ${LD_FLAG}
+
+message_parser.o: message_parser.cpp
+	g++ -c -g -o $@ $^ ${LD_FLAG}

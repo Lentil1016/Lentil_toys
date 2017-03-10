@@ -46,9 +46,6 @@ private:
 	static void* sub_receiver(void* a);
 	static int help();
 	static void release_cond(thread_struct*);
-#ifdef INDEX_SERVER
-	static void message_processor();
-#endif
 };
 
 #endif

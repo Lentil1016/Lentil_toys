@@ -16,27 +16,28 @@ void* push(void* a)
 {
 	int conn = *(int*)a, i=0;
 	std::ostringstream oss;
-	while(i<110)
+	while(i<120)
 	{
 		oss.str("");
 		oss<<"push_back  "<<rand()<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		if(i>10)
+		if(i>20)
 			sleep(1);
 		oss.str("");
 		oss<<"push_back  "<<rand()<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		if(i>10)
+		if(i>20)
 			sleep(1);
 	}
 }
 
 void* assign(void* a)
 {
+	sleep(10);
 	int conn = *(int*)a, i;
 	std::ostringstream oss;
 	while(i<100)
@@ -52,16 +53,17 @@ void* assign(void* a)
 
 void* query(void* a)
 {
+	sleep(10);
 	int conn = *(int*)a, i;
 	std::ostringstream oss;
 	while(1)
 	{
 		oss.str("");
-		oss<<"query "<<rand()%100<<"\n";
+		oss<<"query "<<rand()%100<<" \n";
 		send(conn, oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		usleep(10);
+		usleep(50);
 	}
 }
 
