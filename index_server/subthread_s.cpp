@@ -1,7 +1,7 @@
+#define INDEX_SERVER
 #include"subthread_s.h"
 #include"message_manager.h"
 #include<log4cpp/Category.hh>
-#include<sstream>
 #include"read_guard.h"
 #include<string>
 
@@ -75,7 +75,7 @@ void* sub_thread::sub_receiver(void* a)
 	//init buffer
 	int buffer_lenth=message_manager::get_instance()->buffer_lenth;
 	char buffer[buffer_lenth];
-	std::ostringstream oss;
+	std::ostringstream oss, recv_oss;
 
 	while(1)
 	{
@@ -93,7 +93,7 @@ void* sub_thread::sub_receiver(void* a)
 		{
 			//on condition of received a normal message
 #ifdef INDEX_SERVER
-			message_processor(buffer);
+			message_processor();
 #endif
 			oss.str("");
 			oss<<"receive a message from connection "<<asyner->conn<<" : "<<buffer;
@@ -206,9 +206,12 @@ void* sub_thread::rs_manager(void* conn_pipe)
 }
 
 #ifdef INDEX_SERVER
-void sub_thread::message_processor(char* buffer)
+void sub_thread::message_processor()
 {
+	char buffer[1024];
 	int index=0;
+
+
 	char* blank1 = strchr(buffer,' '), *blank2 = strrchr(buffer, ' ');
 	if (blank1==blank2)
 		return;

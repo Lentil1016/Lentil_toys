@@ -111,3 +111,4 @@ message_manager::~message_manager()
 	pthread_mutex_destroy(&main_run_flag);
 	pthread_mutex_destroy(&pipe_list_mutex);
 }
+

@@ -264,3 +264,4 @@ inline bool read_guard::check_bound(int index)
 		return false;
 	}
 }
+

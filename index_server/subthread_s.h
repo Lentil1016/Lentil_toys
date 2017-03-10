@@ -6,6 +6,7 @@
 
 #include<stdio.h>
 #include<iostream>
+#include<sstream>
 #include<string.h>
 #include<stdlib.h>
 #include<memory>
@@ -46,7 +47,7 @@ private:
 	static int help();
 	static void release_cond(thread_struct*);
 #ifdef INDEX_SERVER
-	static void message_processor(char* buffer);
+	static void message_processor();
 #endif
 };
 

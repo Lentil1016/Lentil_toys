@@ -19,19 +19,19 @@ void* push(void* a)
 	while(i<110)
 	{
 		oss.str("");
-		oss<<"push_back  "<<rand();
+		oss<<"push_back  "<<rand()<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
 		if(i>10)
-			sleep(3);
+			sleep(1);
 		oss.str("");
-		oss<<"push_back  "<<rand();
+		oss<<"push_back  "<<rand()<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
 		if(i>10)
-			sleep(17);
+			sleep(1);
 	}
 }
 
@@ -42,7 +42,7 @@ void* assign(void* a)
 	while(i<100)
 	{
 		oss.str("");
-		oss<<"assign "<<rand()%20<<" "<<rand();
+		oss<<"assign "<<rand()%20<<" "<<rand()<<"\n";
 		send(conn, oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
@@ -57,11 +57,11 @@ void* query(void* a)
 	while(1)
 	{
 		oss.str("");
-		oss<<"query "<<rand()%100;
+		oss<<"query "<<rand()%100<<"\n";
 		send(conn, oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		sleep(1);
+		usleep(10);
 	}
 }
 
