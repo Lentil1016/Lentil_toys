@@ -7,6 +7,7 @@ struct parser_struct
 {
 	std::stringstream* ss;
 	pthread_mutex_t* ss_mutex;
+	int runflag;
 };
 
 

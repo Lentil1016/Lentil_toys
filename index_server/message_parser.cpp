@@ -9,6 +9,7 @@ message_parser::message_parser()
 	pthread_mutex_init(&ss_mutex, NULL);
 	_struct.ss = &ss;
 	_struct.ss_mutex = &ss_mutex;
+	_struct.runflag =1;
 	pthread_create(&parser, NULL, parsing,&_struct);
 	pthread_detach(parser);
 }
@@ -33,9 +34,10 @@ message_parser::message_parser(const message_parser&)
 
 message_parser::~message_parser()
 {
+	_struct.runflag=0;
 	pthread_mutex_lock(&ss_mutex);
-	pthread_cancel(parser);
 	pthread_mutex_destroy(&ss_mutex);
+	pthread_cancel(parser);
 	std::cout<<"message_parser quitted"<<std::endl;
 }
 
@@ -44,7 +46,7 @@ void* message_parser::parsing(void* a)
 	parser_struct& _struct = *(parser_struct*)a;
 	char buffer[1024];
 	int index=0;
-	while(1)
+	while(_struct.runflag)
 	{
 		pthread_mutex_lock(_struct.ss_mutex);
 		while(_struct.ss->tellg()<_struct.ss->tellp())

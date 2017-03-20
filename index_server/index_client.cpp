@@ -23,15 +23,11 @@ void* push(void* a)
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		if(i>10)
-			sleep(1);
 		oss.str("");
 		oss<<"push_back  "<<rand()<<"\n";
 		send(conn,oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		if(i>10)
-			sleep(1);
 	}
 }
 
@@ -40,14 +36,13 @@ void* assign(void* a)
 	sleep(10);
 	int conn = *(int*)a, i;
 	std::ostringstream oss;
-	while(i<100)
+	while(1)
 	{
 		oss.str("");
-		oss<<"assign "<<rand()%20<<" "<<rand()<<"\n";
+		oss<<"assign "<<rand()%300<<" "<<rand()<<"\n";
 		send(conn, oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
-		i++;
-		sleep(10);
+		sleep(1);
 	}
 }
 
@@ -63,10 +58,9 @@ void* query(void* a)
 		send(conn, oss.str().c_str(),oss.str().size(),0);
 		std::cout<<oss.str()<<std::endl;
 		i++;
-		usleep(50);
+		usleep(1000);
 	}
 }
-
 
 int main()
 {
@@ -95,5 +89,4 @@ int main()
 	std::cin.get();
 	return 0;
 }
-
 

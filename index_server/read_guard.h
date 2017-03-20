@@ -36,6 +36,7 @@ private:
 	boost::shared_ptr<std::vector<std::string> >		_host_ptr;
 	boost::mutex										_host_ptr_mutex;
 	boost::mutex										_on_copy_mutex;
+	boost::mutex										_write_mutex;
 	log4cpp::Category& log;
 #ifdef DEBUG_LENTIL
 	//debug
@@ -54,8 +55,8 @@ private:
 
 #ifdef DEBUG_LENTIL
 	int query_times;
-	int copy_times;
-	int push_back_times;
+	int write_on_copy_times;
+	int write_times;
 #endif
 	//other methods, no need to lock
 	inline bool check_bound(int);
