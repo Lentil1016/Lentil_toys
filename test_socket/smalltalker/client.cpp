@@ -1,6 +1,6 @@
 #include "subthread_c.h"
 
-const int myport		=11011;
+const int myport		=9995;
 const int queue_size	=20;
 const int max_retry		=5;
 
@@ -13,7 +13,7 @@ int main()
 	memset(&server_addr, 0, sizeof(0));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(myport);
-	server_addr.sin_addr.s_addr = inet_addr("10.130.73.37");    // 服务器ip
+	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");    // 服务器ip
 
 	//set up connection
 	while (retry<max_retry && connect(sock_client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
