@@ -16,6 +16,11 @@
     </style>
     <script>
         var renderer;
+        var camera;
+        var scene;
+        var light;
+        var line;
+
         function initThree() {
             width = document.getElementById('canvas-frame').clientWidth;
             height = document.getElementById('canvas-frame').clientHeight;
@@ -27,7 +32,6 @@
             renderer.setClearColor(0x888888, 1.0);
         }
 
-        var camera;
         function initCamera() {
             camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
             camera.position.x = 0;
@@ -43,21 +47,16 @@
             });
         }
 
-        var scene;
         function initScene() {
             scene = new THREE.Scene();
         }
 
-        var light;
         function initLight() {
             light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
             light.position.set(100, 100, 200);
             scene.add(light);
         }
 
-        var cube;
-        var p1;
-        var p2;
         function initObject() {
 
             var geometry = new THREE.Geometry();
@@ -71,13 +70,15 @@
             geometry.vertices.push(p2);
             geometry.colors.push( color1, color2 );
 
-            var line = new THREE.Line( geometry, material, THREE.LinePieces );
+            line = new THREE.Line( geometry, material, THREE.LinePieces );
             scene.add(line);
         }
         function render()
         {
             renderer.clear();
             renderer.render(scene, camera);
+            line.rotateY(0.1);
+            line.rotateZ(0.05);
             requestAnimationFrame(render);
         }
         function threeStart() {
