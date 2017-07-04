@@ -3,23 +3,27 @@
 #include<iostream>
 
 //! Base class animal
+
+/** @file man_animal.h
+ *  \verbinclude man_animal.h
+ */
+
 /*!
- * # Markdown?
- * ## Test Markdown
- *
- * |Test|Markdown|
- * |-|-|
- * |Key|value|
- * |Key|Value|
- *
- * ```
- * #!/bin/bash
- * echo RTFM
- * ```
- *
- *
- *
- * */
+
+# markdown test
+## markdown test
+
+|markdown|test|
+|-|-|
+|key|value|
+
+```
+#!/bin/bash
+echo "test markdown"
+```
+
+*/
+
 class animal
 {
 public:

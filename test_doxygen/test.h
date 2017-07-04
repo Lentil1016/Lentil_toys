@@ -7,6 +7,8 @@
 class a
 {
 public:
-	int test_int; // this is a int
-	float test_fun(); /*this is a function*/
+//! This is a int
+	int test_int;
+/*! This is a function*/
+	float test_fun();
 }

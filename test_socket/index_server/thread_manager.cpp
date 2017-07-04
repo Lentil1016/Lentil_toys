@@ -15,7 +15,7 @@ thread_manager::thread_manager():myport(11011),queue_size(20),\
 						log(log4cpp::Category::getInstance(std::string("threadmngr")))
 {
 	//initialize local variables
-    listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	struct sockaddr_in server_addr;
 
 	server_addr.sin_addr.s_addr=htonl(INADDR_ANY);

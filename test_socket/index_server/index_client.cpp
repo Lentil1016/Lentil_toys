@@ -71,7 +71,7 @@ int main()
 	memset(&server_addr, 0, sizeof(0));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(myport);
-	server_addr.sin_addr.s_addr = inet_addr("10.130.73.37");    // 服务器ip
+	server_addr.sin_addr.s_addr = inet_addr("10.130.73.37");	// 服务器ip
 
 	connect(sock_client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
