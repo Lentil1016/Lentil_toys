@@ -1,0 +1,603 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongos1
+  namespace: default
+  labels:
+    run: mongos1
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongos1
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongos1
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongos1
+        run: mongos1
+    spec:
+      restartPolicy: Always
+      hostname: mongos1
+      containers:
+      - image: mongo:3.6.3
+        name: mongos1
+        ports:
+        - name: mongos1
+          containerPort: 27017
+        command: ["mongos"]
+        args: ["--configdb", "cfgrs/mongocfg1:27019,mongocfg2:27019,mongocfg3:27019", "--bind_ip", "0.0.0.0"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongos2
+  namespace: default
+  labels:
+    run: mongos2
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongos2
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongos2
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongos2
+        run: mongos2
+    spec:
+      restartPolicy: Always
+      hostname: mongos1
+      containers:
+      - image: mongo:3.6.3
+        name: mongos2
+        ports:
+        - name: mongos2
+          containerPort: 27017
+        command: ["mongos"]
+        args: ["--configdb", "cfgrs/mongocfg1:27019,mongocfg2:27019,mongocfg3:27019", "--bind_ip", "0.0.0.0"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongocfg1
+  namespace: default
+  labels:
+    run: mongocfg1
+spec:
+  ports:
+  - port: 27019
+    protocol: TCP
+  selector:
+    run: mongocfg1
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongocfg1
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongocfg1
+        run: mongocfg1
+    spec:
+      restartPolicy: Always
+      hostname: mongocfg1
+      containers:
+      - image: mongo:3.6.3
+        name: mongocfg1
+        ports:
+        - name: mongocfg1
+          containerPort: 27019
+        command: ["mongod"]
+        args: ["--noprealloc", "--smallfiles", "--replSet", "cfgrs", "--dbpath","/data/db", "--configsvr", "--noauth", "--bind_ip", "0.0.0.0" ]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongocfg2
+  namespace: default
+  labels:
+    run: mongocfg2
+spec:
+  ports:
+  - port: 27019
+    protocol: TCP
+  selector:
+    run: mongocfg2
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongocfg2
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongocfg2
+        run: mongocfg2
+    spec:
+      restartPolicy: Always
+      hostname: mongocfg2
+      containers:
+      - image: mongo:3.6.3
+        name: mongocfg2
+        ports:
+        - name: mongocfg2
+          containerPort: 27019
+        command: ["mongod"]
+        args: ["--noprealloc", "--smallfiles", "--replSet", "cfgrs", "--dbpath","/data/db", "--configsvr", "--noauth", "--bind_ip", "0.0.0.0"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongocfg3
+  namespace: default
+  labels:
+    run: mongocfg3
+spec:
+  ports:
+  - port: 27019
+    protocol: TCP
+  selector:
+    run: mongocfg3
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongocfg3
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongocfg3
+        run: mongocfg3
+    spec:
+      restartPolicy: Always
+      hostname: mongocfg3
+      containers:
+      - image: mongo:3.6.3
+        name: mongocfg3
+        ports:
+        - name: mongocfg3
+          containerPort: 27019
+        command: ["mongod"]
+        args: ["--noprealloc", "--smallfiles", "--replSet", "cfgrs", "--dbpath","/data/db", "--configsvr", "--noauth", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh1-1
+  namespace: default
+  labels:
+    run: mongosh1-1
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh1-1
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh1-1
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh1-1
+        run: mongosh1-1
+    spec:
+      restartPolicy: Always
+      hostname: mongosh1-1
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh1-1
+        ports:
+        - name: mongosh1-1
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs1", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 2
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh1-2
+  namespace: default
+  labels:
+    run: mongosh1-2
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh1-2
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh1-2
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh1-2
+        run: mongosh1-2
+    spec:
+      restartPolicy: Always
+      hostname: mongosh1-2
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh1-2
+        ports:
+        - name: mongosh1-2
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs1", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh1-3
+  namespace: default
+  labels:
+    run: mongosh1-3
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh1-3
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh1-3
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh1-3
+        run: mongosh1-3
+    spec:
+      restartPolicy: Always
+      hostname: mongosh1-3
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh1-3
+        ports:
+        - name: mongosh1-3
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs1", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh2-1
+  namespace: default
+  labels:
+    run: mongosh2-1
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh2-1
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh2-1
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh2-1
+        run: mongosh2-1
+    spec:
+      restartPolicy: Always
+      hostname: mongosh2-1
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh2-1
+        ports:
+        - name: mongosh2-1
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs2", "--dbpath","/data/db", "--noauth", "--port", "27017" , "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 2
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh2-2
+  namespace: default
+  labels:
+    run: mongosh2-2
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh2-2
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh2-2
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh2-2
+        run: mongosh2-2
+    spec:
+      restartPolicy: Always
+      hostname: mongosh2-2
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh2-2
+        ports:
+        - name: mongosh2-2
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs2", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh2-3
+  namespace: default
+  labels:
+    run: mongosh2-3
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh2-3
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh2-3
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh2-3
+        run: mongosh2-3
+    spec:
+      restartPolicy: Always
+      hostname: mongosh2-3
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh2-3
+        ports:
+        - name: mongosh2-3
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs2", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh3-1
+  namespace: default
+  labels:
+    run: mongosh3-1
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh3-1
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh3-1
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh3-1
+        run: mongosh3-1
+    spec:
+      restartPolicy: Always
+      hostname: mongosh3-1
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh3-1
+        ports:
+        - name: mongosh3-1
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs3", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 2
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh3-2
+  namespace: default
+  labels:
+    run: mongosh3-2
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh3-2
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh3-2
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh3-2
+        run: mongosh3-2
+    spec:
+      restartPolicy: Always
+      hostname: mongosh3-2
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh3-2
+        ports:
+        - name: mongosh3-2
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs3", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+# Mongo shard replica set 1 node 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosh3-3
+  namespace: default
+  labels:
+    run: mongosh3-3
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+  selector:
+    run: mongosh3-3
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mongosh3-3
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongosh3-3
+        run: mongosh3-3
+    spec:
+      restartPolicy: Always
+      hostname: mongosh3-3
+      containers:
+      - image: mongo:3.6.3
+        name: mongosh3-3
+        ports:
+        - name: mongosh3-3
+          containerPort: 27017
+        command: ["mongod"]
+        args: ["--noprealloc", "--shardsvr", "--smallfiles", "--replSet", "rs3", "--dbpath","/data/db", "--noauth", "--port", "27017", "--bind_ip", "0.0.0.0"]
+---
+apiVersion: batch/v1
+kind: Job
+metadata: 
+    name: mongo-bootup
+    namespace: default
+spec:
+    template:
+        spec:
+            restartPolicy: OnFailure
+            containers:
+            - name: mongo-bootup
+              image: mongo:3.6.3
+              command: ["/bin/bash", "/cfg/mongo-bootup.sh"]
+              volumeMounts:
+              - mountPath: /cfg
+                name: cfg
+            volumes:
+            - name: cfg
+              configMap:
+                  name: mongo-conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: mongo-conf
+    namespace: default
+data:
+    mongo-bootup.sh: |
+        #!/bin/bash 
+
+        echo "Initializating configuration nodes..."
+
+        result=''
+        while [ -z "$result"  ]
+        do
+            result=`mongo mongodb://mongocfg1:27019 --eval "rs.initiate({ _id : \"cfgrs\", configsvr: true, members: [{ _id : 0, host : \"mongocfg1:27019\"  },{ _id : 1, host : \"mongocfg2:27019\"  },{ _id : 2, host : \"mongocfg3:27019\"  }] })" 2>&1 |grep -E '(already initialized|"ok" : 1)'`
+        done
+
+        echo Successed [$result]
+
+        for ((rs=1; rs<=3; rs++)) do
+            echo "Initializing mongosh$rs"
+            result=''
+            while [ -z "$result" ]
+            do
+                result=`mongo mongodb://mongosh$rs-1:27017 --eval "rs.initiate({ _id : \"rs$rs\", members: [{ _id : 0, host : \"mongosh$rs-1:27017\" },{ _id : 1, host : \"mongosh$rs-2:27017\" },{ _id : 2, host : \"mongosh$rs-3:27017\" }]})" 2>&1|grep -E '(already initialized|"ok" : 1)'`
+            done
+            echo Successed [$result]
+        done
+
+        for ((rs=1; rs<=3; rs++)) do
+            echo "Adding rs$rs to cluster"
+            result=''
+            while [ -z "$result" ]
+            do
+                result=`mongo mongos1:27017 --eval "sh.addShard(\"rs$rs/mongosh$rs-1:27017\")" 2>&1 | grep -E '(already initialized|"ok" : 1)'`
+            done
+            echo Successed [$result]
+        done
+
+        echo "Mongo cluster ready"
+
